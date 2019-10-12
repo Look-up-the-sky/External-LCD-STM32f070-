@@ -20,10 +20,10 @@ modbus_info_t modbus;
 INT32U c_1MS_Cnt;
 INT32U Timeout_Cnt = 0;
 INT8U UART_RX_RUNNING_FLAG = 0;
-INT8U UART2_RX_RUNNING_FLAG = 0;
+//INT8U UART2_RX_RUNNING_FLAG = 0;
 INT16U PUSDATE_BUF[128];
-INT8U  Uart2_Receive_BUF[20];
-INT16U Uart2_Receive_Len;  //接收长度
+//INT8U  Uart2_Receive_BUF[20];
+//INT16U Uart2_Receive_Len;  //接收长度
 //**************modbus任务标志位*************
 INT8U FLAG_03_UPDATE = 1;
 INT8U FLAG_04_UPDATE = 0;
@@ -32,8 +32,9 @@ INT8U FLAG_10_UPDATE = 0;
 INT8U FINISH_FLAG = 0;
 INT8U CRC_Error_Flag = 0;
 INT8U Read_Write_Change_Flag = 0;
-INT8U Uart2_Receive_Finish_Flag = 0;
-INT8U	Uart2_Receiving_Flag = 0;
+INT8U LCD_IAP_Updata_Flag = 0;    //LCD屏升级信号
+//INT8U Uart2_Receive_Finish_Flag = 0;
+//INT8U Uart2_Receiving_Flag = 0;
 //**************globle*****************
 WRITE_06_DATE write_06_date;
 WRITE_10_DATE write_10_date;
@@ -70,32 +71,39 @@ void MODBUS_UART1_IRQHandler(void)
 			Comm_StateFlag = 0;
 		}
 		modbus.modbus_rcv_buf[modbus.recvlen++]=USART_ReceiveData(USART1);
+		if((modbus.modbus_rcv_buf[0] == 0x01)&&(modbus.modbus_rcv_buf[1] == 0x10)&&(modbus.modbus_rcv_buf[2] == 0x70)
+			&&(modbus.modbus_rcv_buf[3] == 0x00)&&(modbus.modbus_rcv_buf[4] == 0x00)&&(modbus.modbus_rcv_buf[5] == 0x02)
+			&&(modbus.modbus_rcv_buf[6] == 0x04)&&(modbus.modbus_rcv_buf[7] == 0x49)&&(modbus.modbus_rcv_buf[8] == 0x41)
+			&&(modbus.modbus_rcv_buf[9] == 0x50)&&(modbus.modbus_rcv_buf[10] == 0x45))
+		{
+			LCD_IAP_Updata_Flag = 1;   //升级信号判断
+		}
 		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 	}
 	
 
 }
 
-void MODBUS_UART2_IRQHandler(void)
-{
-		if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET)        
-	   {
-			 Uart2_Receive_BUF[Uart2_Receive_Len++]=USART_ReceiveData(USART2);
-			 USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-			 Uart2_Receiving_Flag = 1;
-	   }	 
-		else if((USART_GetFlagStatus(USART2,USART_FLAG_IDLE)!=RESET)&&(Uart2_Receiving_Flag == 1))
-			{					
-				USART_ClearFlag(USART2, USART_FLAG_IDLE);						
-				Uart2_Receive_Finish_Flag = 1;
-				Uart2_Receiving_Flag = 0;
-      }	
-			else
-			{
-				USART_ClearFlag(USART2, USART_FLAG_IDLE);	
-			}
-	
-}
+//void MODBUS_UART2_IRQHandler(void)
+//{
+//		if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET)        
+//	   {
+//			 Uart2_Receive_BUF[Uart2_Receive_Len++]=USART_ReceiveData(USART2);
+//			 USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+//			 Uart2_Receiving_Flag = 1;
+//	   }	 
+//		else if((USART_GetFlagStatus(USART2,USART_FLAG_IDLE)!=RESET)&&(Uart2_Receiving_Flag == 1))
+//			{					
+//				USART_ClearFlag(USART2, USART_FLAG_IDLE);						
+//				Uart2_Receive_Finish_Flag = 1;
+//				Uart2_Receiving_Flag = 0;
+//      }	
+//			else
+//			{
+//				USART_ClearFlag(USART2, USART_FLAG_IDLE);	
+//			}
+//	
+//}
 
 //***********************************发送函数**********************************
 void MODBUS_UARTSend(USART_TypeDef* USARTx, INT8U *BufferPtr, INT32U Length)
@@ -119,25 +127,18 @@ void sModbusTask(void)
 	static unsigned char CNT = 0,First_Flag =0,Second_Flag =0;
 	INT16U cur_cnt,offset;
 	//01 10 70 00 00 02 04 49 41 50 45 2d d6
-	if(Uart2_Receive_Finish_Flag == 1)     //升级信号监听
+	if(LCD_IAP_Updata_Flag == 1)  //判断升级信号
 	{
-		Uart2_Receive_Finish_Flag = 0;
-		Uart2_Receive_Len = 0;
-		if((Uart2_Receive_BUF[0] == 0x01)&&(Uart2_Receive_BUF[1] == 0x10)&&(Uart2_Receive_BUF[2] == 0x70)
-			&&(Uart2_Receive_BUF[3] == 0x00)&&(Uart2_Receive_BUF[4] == 0x00)&&(Uart2_Receive_BUF[5] == 0x02)
-			&&(Uart2_Receive_BUF[6] == 0x04)&&(Uart2_Receive_BUF[7] == 0x49)&&(Uart2_Receive_BUF[8] == 0x41)
-			&&(Uart2_Receive_BUF[9] == 0x50)&&(Uart2_Receive_BUF[10] == 0x45))
-		{
-			/* Clear All pending flags */
-				FLASH_ClearFlag( FLASH_FLAG_BSY|FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
-				FLASH_Unlock();
-				FLASH_ErasePage(FLAG_FLASH_ADDRESS);
-				if(FLASH_ProgramWord(FLAG_FLASH_ADDRESS,APP_TO_BOOT) == FLASH_COMPLETE)
-				{	
-					FLASH_Lock();
-					__set_PRIMASK(1);
-					NVIC_SystemReset();
-				}
+		
+		/* Clear All pending flags */
+		FLASH_ClearFlag( FLASH_FLAG_BSY|FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
+		FLASH_Unlock();
+		FLASH_ErasePage(FLAG_FLASH_ADDRESS);
+		if(FLASH_ProgramWord(FLAG_FLASH_ADDRESS,APP_TO_BOOT) == FLASH_COMPLETE)
+		{	
+			FLASH_Lock();
+			__set_PRIMASK(1);
+			NVIC_SystemReset();
 		}
 	}
 	else if(PRJ_NUMBER == Default_Model) //用于启动判断是黄蜂还是蜜蜂机型
@@ -233,7 +234,7 @@ void sModbusTask(void)
 						else
 						{
 							if((UART_RX_RUNNING_FLAG == 1)&&(First_Flag == 1)&&(Second_Flag == 1))
-								{
+							{
 									cur_cnt = c_1MS_Cnt;
 									offset = (cur_cnt>=modbus.prevtime)?(cur_cnt-modbus.prevtime):(0xFFFFFFFF-modbus.prevtime+cur_cnt);
 									if(offset < MAX_RCV_PERIOD)
@@ -257,7 +258,7 @@ void sModbusTask(void)
 											Second_Flag = 0;
 										}
 									}
-								}							
+							}							
 						}
 					}
 				}
@@ -276,42 +277,111 @@ void sModbusTask(void)
 			{
 				if(FLAG_03_UPDATE == 1)
 				{
-					switch(CNT)
-					{
-						case 0:
+						switch(CNT)
 						{
-							if(PRJ_NUMBER == SUNNYBEE)
-								read_03_update(0x01,0x2000, 0x0c);
-							else if(PRJ_NUMBER == HORNET)
-								read_03_update(0x01,0x2080, 0x03);						
-							if(FINISH_FLAG ==1)
-							{
-								CNT = 1;
-							}
-						
-						}
-						break;
-						case 1:
-						{
-							if(PRJ_NUMBER == SUNNYBEE)
-								read_03_update(0x01,0x2100, 0x25);
-							else if(PRJ_NUMBER == HORNET)
-								read_03_update(0x01,0x2100, 0x30);
-							if(FINISH_FLAG ==1)
-							{
-								CNT = 2;
-							}
-						}
-						break;
-						case 2:
-						{
-							if(PRJ_NUMBER == SUNNYBEE)
-								read_03_update(0x01,0x2125, 0x33);
-							else if(PRJ_NUMBER == HORNET)
-								read_03_update(0x01,0x2202, 0x04);
-							if(FINISH_FLAG ==1)
+							case 0:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
+									read_03_update(0x01,0x2000, 0x0c);
+								else if(PRJ_NUMBER == HORNET)
+									read_03_update(0x01,0x2080, 0x03);						
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 1;
+								}
+							
+							}
+							break;
+							case 1:
+							{
+								if(PRJ_NUMBER == SUNNYBEE)
+									read_03_update(0x01,0x2100, 0x25);
+								else if(PRJ_NUMBER == HORNET)
+									read_03_update(0x01,0x2100, 0x30);
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 2;
+								}
+							}
+							break;
+							case 2:
+							{
+								if(PRJ_NUMBER == SUNNYBEE)
+									read_03_update(0x01,0x2125, 0x33);
+								else if(PRJ_NUMBER == HORNET)
+									read_03_update(0x01,0x2202, 0x04);
+								if(FINISH_FLAG ==1)
+								{
+									if(PRJ_NUMBER == SUNNYBEE)
+									{
+										System_Time_Change_Flag = 1; //系统时间改变标志位
+										CNT = 0;
+										Read_Write_Change_Flag = 1;
+										FLAG_04_UPDATE = 1;
+										FLAG_03_UPDATE = 0;   //开机询问一次
+									}
+									else if(PRJ_NUMBER == HORNET)
+									{
+										CNT = 3;
+									}
+								}
+							}
+							break;
+							case 3:
+							{
+								if(PRJ_NUMBER == HORNET)
+								  read_03_update(0x01,0x2280, 0x08);
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 4;
+								}
+							}
+							break;
+							case 4:
+							{
+								if(PRJ_NUMBER == HORNET)
+								read_03_update(0x01,0x2300, 0x0B);
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 5;
+								}
+							}
+							break;
+							case 5:
+							{
+								if(PRJ_NUMBER == HORNET)
+								read_03_update(0x01,0x2300, 0x3B);
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 6;
+								}
+							}
+							break;
+							case 6:
+							{
+								if(PRJ_NUMBER == HORNET)
+									read_03_update(0x01,0x233B, 0x41);
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 7;
+								}
+							}
+							break;
+							case 7:
+							{
+								if(PRJ_NUMBER == HORNET)
+									read_03_update(0x01,0x238F, 0x54);
+								if(FINISH_FLAG ==1)
+								{
+									CNT = 8;
+								}
+							}
+							break;
+							case 8:
+							{
+								if(PRJ_NUMBER == HORNET)
+									read_03_update(0x01,0x2480, 0x13);
+								if(FINISH_FLAG ==1)
 								{
 									System_Time_Change_Flag = 1; //系统时间改变标志位
 									CNT = 0;
@@ -319,63 +389,14 @@ void sModbusTask(void)
 									FLAG_04_UPDATE = 1;
 									FLAG_03_UPDATE = 0;   //开机询问一次
 								}
-								else if(PRJ_NUMBER == HORNET)
+							}
+							default:
 								{
-									CNT = 3;
+								if(CNT > 8)
+									CNT = 0;
 								}
-							}
+								break;
 						}
-						break;
-						case 3:
-						{
-							if(PRJ_NUMBER == HORNET)
-							  read_03_update(0x01,0x2280, 0x08);
-							if(FINISH_FLAG ==1)
-							{
-								CNT = 4;
-							}
-						}
-						break;
-						case 4:
-						{
-							if(PRJ_NUMBER == HORNET)
-						    read_03_update(0x01,0x2300, 0x7A);
-							if(FINISH_FLAG ==1)
-							{
-								CNT = 5;
-							}
-						}
-						break;
-						case 5:
-						{
-							if(PRJ_NUMBER == HORNET)
-								read_03_update(0x01,0x237A, 0x69);
-							if(FINISH_FLAG ==1)
-							{
-								CNT = 6;
-							}
-						}
-						break;
-						case 6:
-						{
-							if(PRJ_NUMBER == HORNET)
-								read_03_update(0x01,0x2480, 0x13);
-							if(FINISH_FLAG ==1)
-							{
-								System_Time_Change_Flag = 1; //系统时间改变标志位
-								CNT = 0;
-								Read_Write_Change_Flag = 1;
-								FLAG_04_UPDATE = 1;
-								FLAG_03_UPDATE = 0;   //开机询问一次
-							}
-						}
-						default:
-							{
-							if(CNT > 6)
-								CNT = 0;
-							}
-							break;
-					}
 				}
 				else
 				{
@@ -386,23 +407,39 @@ void sModbusTask(void)
 							case 0:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
-									read_04_update(0x01,0x0000,0x61);
+									read_03_update(0x01,0x7006, 0x01);   //询问IAP升级状态
 								else if(PRJ_NUMBER == HORNET)
-									read_04_update(0x01,0x0000,0x61);
-								if(FINISH_FLAG == 1)
+									read_03_update(0x01,0x7006, 0x01);   //询问IAP升级状态			
+								if(FINISH_FLAG ==1)
 								{
-									CNT = 1;
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
+										CNT = 1;									
 								}
 							}
 								break;
 							case 1:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
-									read_04_update(0x01,0x0100,0x35);
+									read_03_update(0x01,0x2119, 0x01);   //询问开关机状态
 								else if(PRJ_NUMBER == HORNET)
-									read_04_update(0x01,0x0100,0x07);
-								if(FINISH_FLAG == 1)
+									read_03_update(0x01,0x2287, 0x01);   //询问开关机状态			
+								if(FINISH_FLAG ==1)
 								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
 									CNT = 2;
 								}
 							}
@@ -410,11 +447,19 @@ void sModbusTask(void)
 							case 2:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
-									read_04_update(0x01,0x0200,0x1c);
+									read_04_update(0x01,0x0000,0x61);
 								else if(PRJ_NUMBER == HORNET)
-									read_04_update(0x01,0x0180,0x10);
+									read_04_update(0x01,0x0000,0x61);
 								if(FINISH_FLAG == 1)
 								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
 									CNT = 3;
 								}
 							}
@@ -422,11 +467,19 @@ void sModbusTask(void)
 							case 3:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
-									read_04_update(0x01,0x0BB8,0x50);
+									read_04_update(0x01,0x0100,0x35);
 								else if(PRJ_NUMBER == HORNET)
-									read_04_update(0x01,0x0200,0x1A);
+									read_04_update(0x01,0x0100,0x07);
 								if(FINISH_FLAG == 1)
 								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 6;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
 									CNT = 4;
 								}
 							}
@@ -434,11 +487,19 @@ void sModbusTask(void)
 							case 4:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
-									read_04_update(0x01,0x0FA0,0x21);
+									read_04_update(0x01,0x0200,0x1c);
 								else if(PRJ_NUMBER == HORNET)
-									read_04_update(0x01,0x0280,0x0F);
+									read_04_update(0x01,0x0180,0x10);
 								if(FINISH_FLAG == 1)
 								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
 									CNT = 5;
 								}
 							}
@@ -446,18 +507,118 @@ void sModbusTask(void)
 							case 5:
 							{
 								if(PRJ_NUMBER == SUNNYBEE)
-									read_04_update(0x01,0x1004,0x1b);
+									read_04_update(0x01,0x0BB8,0x50);
 								else if(PRJ_NUMBER == HORNET)
-									read_04_update(0x01,0x0300,0x64);
+									read_04_update(0x01,0x0200,0x1A);
 								if(FINISH_FLAG == 1)
 								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 8;
+									}
+									else
+									CNT = 6;
+								}
+							}
+								break;
+							case 6:
+							{
+								if(PRJ_NUMBER == SUNNYBEE)
+									read_04_update(0x01,0x0FA0,0x21);
+								else if(PRJ_NUMBER == HORNET)
+									read_04_update(0x01,0x0280,0x0F);
+								if(FINISH_FLAG == 1)
+								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
+									CNT = 7;
+								}
+							}
+								break;
+							case 7:
+							{
+								if(PRJ_NUMBER == SUNNYBEE)
+								{
+									read_04_update(0x01,0x1004,0x1b);
+									if(FINISH_FLAG == 1)
+									{
+										if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
+										CNT = 0;
+									}
+								}
+								else if(PRJ_NUMBER == HORNET)
+								{
+									read_04_update(0x01,0x0300,0x64);
+									if(FINISH_FLAG == 1)
+									{
+										if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+										{
+											if(PRJ_NUMBER == SUNNYBEE)
+												CNT = 3;
+											else if(PRJ_NUMBER == HORNET)
+												CNT = 5;
+										}
+										else
+										CNT = 8;
+									}
+								}
+							}
+								break;
+							case 8:
+							{
+								if(PRJ_NUMBER == HORNET)
+									read_04_update(0x01,0x0FA0,0x21);
+								if(FINISH_FLAG == 1)
+								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
+									CNT = 9;
+								}
+							}
+								break;
+							case 9:
+							{
+								if(PRJ_NUMBER == HORNET)
+									read_04_update(0x01,0x1004,0x1b);
+								if(FINISH_FLAG == 1)
+								{
+									if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
+									{
+										if(PRJ_NUMBER == SUNNYBEE)
+											CNT = 3;
+										else if(PRJ_NUMBER == HORNET)
+											CNT = 5;
+									}
+									else
 									CNT = 0;
 								}
 							}
 								break;
 							default:
 							{
-								if(CNT >5)
+								if(CNT >9)
 									CNT = 0;
 							}
 								break;
@@ -606,6 +767,12 @@ void read_04_update(INT8U ID,INT16U usStartAddr, INT16U usLen)
 	}
 	else                                      //询问指令发送完成，等待接收
 	{
+		Timeout_Cnt++;
+		if(Timeout_Cnt > 5)      //防止同逆变器一起上电，导致询问后永远等待逆变器回应
+		{
+			Timeout_Cnt = 0;
+			SEND_04_FLAG = 0;
+		}
 		if(UART_RX_RUNNING_FLAG == 1)
 		{
 			cur_cnt = c_1MS_Cnt;
@@ -662,6 +829,12 @@ void read_04_update(INT8U ID,INT16U usStartAddr, INT16U usLen)
 //	}
 //	else                            //发送完成，等待接收回复
 //	{
+//		Timeout_Cnt++;
+//		if(Timeout_Cnt > 5)      //防止同逆变器一起上电，导致询问后永远等待逆变器回应
+//		{
+//			Timeout_Cnt = 0;
+//			SEND_06_FLAG = 0;
+//		}
 //		if(UART_RX_RUNNING_FLAG == 1)
 //		{
 //			cur_cnt = c_1MS_Cnt;
@@ -713,6 +886,12 @@ void write_10_update(INT8U ID,INT16U usStartAddr, INT16U usLen)
 	}
 	else                            //发送完成，等待接收回复
 	{
+		Timeout_Cnt++;
+		if(Timeout_Cnt > 5)      //防止同逆变器一起上电，导致询问后永远等待逆变器回应
+		{
+			Timeout_Cnt = 0;
+			SEND_10_FLAG = 0;
+		}
 		if(UART_RX_RUNNING_FLAG == 1)
 		{
 			cur_cnt = c_1MS_Cnt;

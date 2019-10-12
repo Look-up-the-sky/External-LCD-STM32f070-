@@ -28,7 +28,7 @@
 #define STORE_TYPE_MASK     0x00F0
 #define CFG_TYPE_MASK       0x000F
 
-#define	PARAM_NUM            320
+#define	PARAM_NUM            380
 #define INV_TYPE_PARAM_CFG_NUM 64
 
 #define PARAM_SET_SUCCESS    0

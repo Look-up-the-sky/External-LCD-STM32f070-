@@ -47,10 +47,10 @@ void RCC_Configuration(void);
 void GPIO_Configuration(void);
 void TIM16_Configuration(void);
 void USART1_Configuration(void);
-void USART2_Configuration(void);
+//void USART2_Configuration(void);
 void I2C_Configuration(void);
 void EXTI_Config(void);
-void USART2_Printf_Configuration(void); 
+//void USART2_Printf_Configuration(void); 
 
 void sInitMCU(void)
 {
@@ -58,7 +58,7 @@ void sInitMCU(void)
 	GPIO_Configuration();
 	TIM16_Configuration();
 	USART1_Configuration();									//用于主副通讯的USART1初始化配置
-	USART2_Printf_Configuration();       //debug&升级
+	//USART2_Printf_Configuration();       //debug&升级
 	I2C_Configuration();
 	sInitComData();
 	sInitPcf8563();	
@@ -209,55 +209,55 @@ void USART1_Configuration(void)
 }
 
 
-void USART2_Printf_Configuration(void)
-{
-	USART_InitTypeDef USART_InitStructure;
-	GPIO_InitTypeDef GPIO_InitStructure;
-	NVIC_InitTypeDef  NVIC_InitStructure;
-	
-	/* Enable GPIO clock */
-	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
-	/* Enable USART clock */
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
-	/* Connect PA2 to USART1_Tx */
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_1);  
-	/* Connect PA3 to USART1_Rx */
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_1);
-  
-	/* Configure USART Tx and Rx as alternate function push-pull */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-	
-	/* Enable the USART2 gloabal Interrupt */
-	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPriority = 4;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
+//void USART2_Printf_Configuration(void)
+//{
+//	USART_InitTypeDef USART_InitStructure;
+//	GPIO_InitTypeDef GPIO_InitStructure;
+//	NVIC_InitTypeDef  NVIC_InitStructure;
+//	
+//	/* Enable GPIO clock */
+//	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+//	/* Enable USART clock */
+//	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+//	/* Connect PA2 to USART1_Tx */
+//	GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_1);  
+//	/* Connect PA3 to USART1_Rx */
+//	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_1);
+//  
+//	/* Configure USART Tx and Rx as alternate function push-pull */
+//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+//	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+//	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+//	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+//	
+//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
+//	GPIO_Init(GPIOA, &GPIO_InitStructure);
+//	
+//	/* Enable the USART2 gloabal Interrupt */
+//	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+//	NVIC_InitStructure.NVIC_IRQChannelPriority = 4;
+//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//	NVIC_Init(&NVIC_InitStructure);
 
-	USART_InitStructure.USART_BaudRate = 9600;
-	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;
-	/* When using Parity the word length must be configured to 8 bits */
-	USART_InitStructure.USART_Parity = USART_Parity_No;
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-	USART_Init(USART2, &USART_InitStructure); 
+//	USART_InitStructure.USART_BaudRate = 9600;
+//	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+//	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+//	/* When using Parity the word length must be configured to 8 bits */
+//	USART_InitStructure.USART_Parity = USART_Parity_No;
+//	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+//	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+//	USART_Init(USART2, &USART_InitStructure); 
 
-	/* Enable USART */
-	USART_Cmd(USART2, ENABLE);
-	/* Enable USART Receive data register not empty interrupt */
-	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
-	USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);//空闲使能，用于判断数据帧接收完成
-	/* Clear Transmission complete flag */
-	USART_ClearFlag(USART2, USART_FLAG_TC);
-	USART_ClearFlag(USART2, USART_FLAG_IDLE);
-	USART_ClearFlag(USART2, USART_FLAG_RXNE);
-}
+//	/* Enable USART */
+//	USART_Cmd(USART2, ENABLE);
+//	/* Enable USART Receive data register not empty interrupt */
+//	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+//	USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);//空闲使能，用于判断数据帧接收完成
+//	/* Clear Transmission complete flag */
+//	USART_ClearFlag(USART2, USART_FLAG_TC);
+//	USART_ClearFlag(USART2, USART_FLAG_IDLE);
+//	USART_ClearFlag(USART2, USART_FLAG_RXNE);
+//}
 
 void I2C_Configuration(void)
 {

@@ -660,7 +660,7 @@ SYSTEMTIME TimeRange = {50,12,31,24,60,60};
 const INT8U lubScanMpptPeriodMax[2] = {4,60};
 const INT8U lubLCDAdr[4] = {0x00,0x40,0x14,0x54};
 const INT8U lubLCMINTable[4] = {0x38,0x08,0x06,0x0C};
-const INT16U luwVoltSetMin[9] = {2400,2400,100,100,1150,800,100,100,2400};
-const INT16U luwVoltSetMax[9] = {2760,2760,60000,60000,2200,2200,60000,60000,2600};
+const INT16U luwVoltSetMin[8] = {2300,2300,0,0,1000,850,0,0};
+const INT16U luwVoltSetMax[8] = {2800,3200,10000,10000,2300,2300,10000,10000};
 
 #endif

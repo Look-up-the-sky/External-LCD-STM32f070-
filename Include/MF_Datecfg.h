@@ -199,5 +199,6 @@ extern INT16S MF_wZeroExpPercent;	   //wZeroExpPercent
 extern INT16U MF_ausProtEnResv[3];				//Reserved
 extern INT16U MF_ausCommSetEndIDTAG;  //设备结束标识TAG  	
 extern INT16U MF_ausCommSetEndIDLength;  		//标识长度	
+extern INT16U MF_IAPState;  		//IAP状态
 
 #endif

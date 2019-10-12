@@ -19,21 +19,6 @@
 #include "Lib_Communication.h"
 #include "Variable_Transformation.h"
 /********************************************************************
- * Macros
- ********************************************************************/
-
-
-/********************************************************************
- * Constant
- ********************************************************************/
-
-
-/********************************************************************
- * Local Types
- ********************************************************************/
-
-
-/********************************************************************
  * Global Types
  ********************************************************************/
 extern INT32U CNT_1MS;
@@ -90,10 +75,10 @@ void USART1_IRQHandler(void)
 }
 
 
-void USART2_IRQHandler(void)
-{
-	MODBUS_UART2_IRQHandler();
-}
+//void USART2_IRQHandler(void)
+//{
+//	MODBUS_UART2_IRQHandler();
+//}
 
 
 void NMI_Handler(void)
@@ -133,13 +118,6 @@ void sHardFault(void)
 		EXTI_ClearITPendingBit(EXTI_Line11);
 	}
 }
-
-
-//void EXTI4_15_IRQHandler(void)
-//{
-//	sHardFault();	
-//}
-
 
 void SYSCLKConfig_STOP(void)							//从stop mode恢复系统时钟
 {

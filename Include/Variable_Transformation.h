@@ -138,6 +138,8 @@ extern Protection_Func_Enable_INFO Protection_Func_Enable_Info;
 extern Param_Set_INFO Param_Set_Info;
 extern Key_Data_INFO Key_Data_Info;
 extern INV_Set_INFO INV_Set_Info;
+extern INT16U IAPState;  		//IAP×´Ì¬
+extern INT16U InvOnOffCmd;  		//¿ª¹Ø»ú×´Ì¬
 extern INT8U System_Time_Change_Flag;
 extern INT8U Italy_SelfTest_Flag;
 void Variable_Transformation(void);

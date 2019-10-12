@@ -54,6 +54,21 @@ typedef struct
 	
 }HF_Half_Power_STR;
 
+typedef struct
+{
+	INT16U Limit_Value;
+	INT16U Limit_Time;
+	INT16U Trip_Value;
+	INT16U Trip_Time;
+}HF_ITALY_SELF_TEST_STR;
+
+typedef struct
+{
+	INT16U Trip_Value;
+	INT16U Trip_Time;
+	INT16U Step_Result;
+}HF_ITALY_RESULT_STR;
+
 //设备描述
 extern INT16U HF_ausFc04ProtocolID[2];	//协议标识
 extern INT16U HF_ausManufacturer[16];	//生产商
@@ -116,6 +131,12 @@ extern HF_Half_Power_STR HF_aulYearlyElecGenLog[5];	//年发电量日志
 
 //严重故障数据日志
 extern INT16U HF_ausCriticalFltDataLog[20];	//严重故障日志
+
+//**********************意大利自检**************************
+extern INT16U HF_SelfTestState;     //self-test State
+extern HF_ITALY_SELF_TEST_STR HF_SelfTest[8];
+extern INT16U HF_TEST_TIME[3];
+extern HF_ITALY_RESULT_STR HF_ItalyResult[8];
 
 //调试录播信息
 extern INT16S HF_sDcBusVolt;				//直流母线电压
@@ -225,6 +246,8 @@ extern INT16U HF_usArcResetEn;					//ARC复位
 extern INT16U HF_usReconnectPwrRampUpEn; 		//电网故障重连功率缓启
 extern INT16U HF_usAntiRefluxPwrPercent; 		//防逆流功率百分比
 extern INT16U HF_ausProtEnResv[8];				//Reserved
+
+extern INT16U HF_IAPState;  		//IAP状态
 
 
 #endif

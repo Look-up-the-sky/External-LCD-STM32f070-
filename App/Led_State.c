@@ -8,6 +8,7 @@
 #include "Led_State.h"
 #include "MF_Datecfg.h"
 #include "HF_Datecfg.h"
+#include "Variable_Transformation.h"
 INT8U INV_StateFlag;
 INT16S Comm_StateFlag = 0;   //通讯状态
 INT16U INV_Lastest_Err_Type;   //逆变器当前故障类型
@@ -23,6 +24,12 @@ void sLedStateTask(void)
 	else
 	{
 		cCommLEDOn();
+	}
+	if((IAPState > 1)&&(IAPState < 6))   //逆变器升级中
+	{
+		cNormalOff();
+		cFaultOff();
+		return;
 	}
 	if(PRJ_NUMBER == SUNNYBEE)
 	{	
@@ -236,7 +243,10 @@ void sLedStateTask(void)
 				INV_StateFlag = 4;
 			break;
 			case HF_StopState:
-				INV_StateFlag = 8;
+				if(InvOnOffCmd == 0xAE)   //关机状态
+					INV_StateFlag = 9;
+				else
+					INV_StateFlag = 8;
 			break;
 			case HF_FlashState:
 				INV_StateFlag = 10;
@@ -252,7 +262,7 @@ void sLedStateTask(void)
 				if(i < 5)
 				{				
 					cNormalOn();
-					cFaultOn();
+					cFaultOff();
 				}
 				else if((i >= 5)&&(i < 10))
 				{
@@ -271,7 +281,7 @@ void sLedStateTask(void)
 				if(i < 5)
 				{				
 					cNormalOn();
-					cFaultOn();
+					cFaultOff();
 				}
 				else if((i >= 5)&&(i < 10))
 				{
@@ -334,15 +344,30 @@ void sLedStateTask(void)
 						cFaultOn();
 					}
 					break;
-					case 4:
-					{
-						cNormalOn();
-						cFaultOn();
-					}
+					default:      
 					break;					
 				}
 			}
 				break;
+			case 9:                     //遥控关机状态
+			{
+				i++;
+				if(i < 5)
+				{				
+					cNormalOn();
+					cFaultOff();
+				}
+				else if((i >= 5)&&(i < 10))
+				{
+					cNormalOff();
+					cFaultOff();
+				}
+				else if(i == 10)
+				{
+					i = 0;
+				}
+			}
+				break;	
 			case 10:
 			{
 				i++;

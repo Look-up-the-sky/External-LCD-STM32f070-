@@ -58,6 +58,7 @@ HF_PV_ARRAY_DISPLAY_INFO_STR HF_astrPvArrayDisplayInfo[8];
 //故障信息
 HF_ALARM_DISPLAY_INFO_STR HF_astrAlarmDsiplayInfo[20];
 
+
 //发电量日志信息
 INT16S HF_asDailyElecGenLog[31];		//日发电量日志
 HF_Half_Power_STR HF_aulMonthlyElecGenLog[12];	//月发电量日志
@@ -65,6 +66,12 @@ HF_Half_Power_STR HF_aulYearlyElecGenLog[5];	//年发电量日志
 
 //严重故障数据日志
 INT16U HF_ausCriticalFltDataLog[20];	//严重故障日志
+
+//**********************意大利自检**************************
+INT16U HF_SelfTestState;     //self-test State
+HF_ITALY_SELF_TEST_STR HF_SelfTest[8];
+INT16U HF_TEST_TIME[3];
+HF_ITALY_RESULT_STR HF_ItalyResult[8];
 
 //调试录播信息
 INT16S HF_sDcBusVolt;				//直流母线电压
@@ -174,6 +181,8 @@ INT16U HF_usArcResetEn;					//ARC复位
 INT16U HF_usReconnectPwrRampUpEn; 		//电网故障重连功率缓启
 INT16U HF_usAntiRefluxPwrPercent; 		//防逆流功率百分比
 INT16U HF_ausProtEnResv[8];				//Reserved
+
+INT16U HF_IAPState = 0;  		//IAP状态
 
 
 const PARAM_CFG_TBL_STR HF_astrParamSendTblAttr[PARAM_NUM] =
@@ -455,9 +464,73 @@ const PARAM_CFG_TBL_STR HF_astrParamSendTblAttr[PARAM_NUM] =
  {0x0360,    0x0360,    0,    65535,   		1,    SEND_TYPE_16BIT,    &HF_astrAlarmDsiplayInfo[19].data.DateHour},
  {0x0361,    0x0361,    0,    65535,   		1,    SEND_TYPE_16BIT,    &HF_astrAlarmDsiplayInfo[19].data.MinuteSecond},
  {0x0362,    0x0362,    0,    65535,   		1,    SEND_TYPE_16BIT,    &HF_astrAlarmDsiplayInfo[19].ALARM_TYPE},
- {0x0363,    0x0363,    0,    65535,   		1,    SEND_TYPE_16BIT,    &HF_astrAlarmDsiplayInfo[19].ALARM_NUM}
+ {0x0363,    0x0363,    0,    65535,   		1,    SEND_TYPE_16BIT,    &HF_astrAlarmDsiplayInfo[19].ALARM_NUM},
  
  //发电量日志信息（暂时不显示）
+ 
+ 
+ //**********************意大利自检**************************
+ {0x0FA0,	   0x0FA0,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTestState},
+ {0x0FA1,	   0x0FA1,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[0].Limit_Value},
+ {0x0FA2,	   0x0FA2,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[0].Limit_Time},
+ {0x0FA3,	   0x0FA3,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[0].Trip_Value},
+ {0x0FA4,	   0x0FA4,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[0].Trip_Time},
+ {0x0FA5,	   0x0FA5,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[1].Limit_Value},
+ {0x0FA6,	   0x0FA6,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[1].Limit_Time},
+ {0x0FA7,	   0x0FA7,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[1].Trip_Value},
+ {0x0FA8,	   0x0FA8,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[1].Trip_Time},
+ {0x0FA9,	   0x0FA9,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[2].Limit_Value},
+ {0x0FAA,	   0x0FAA,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[2].Limit_Time},
+ {0x0FAB,	   0x0FAB,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[2].Trip_Value},
+ {0x0FAC,	   0x0FAC,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[2].Trip_Time},
+ {0x0FAD,	   0x0FAD,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[3].Limit_Value},
+ {0x0FAE,	   0x0FAE,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[3].Limit_Time},
+ {0x0FAF,	   0x0FAF,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[3].Trip_Value},
+ {0x0FB0,	   0x0FB0,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[3].Trip_Time},
+ {0x0FB1,	   0x0FB1,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[4].Limit_Value},
+ {0x0FB2,	   0x0FB2,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[4].Limit_Time},
+ {0x0FB3,	   0x0FB3,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[4].Trip_Value},
+ {0x0FB4,	   0x0FB4,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[4].Trip_Time},
+ {0x0FB5,	   0x0FB5,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[5].Limit_Value},
+ {0x0FB6,	   0x0FB6,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[5].Limit_Time},
+ {0x0FB7,	   0x0FB7,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[5].Trip_Value},
+ {0x0FB8,	   0x0FB8,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[5].Trip_Time},
+ {0x0FB9,	   0x0FB9,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[6].Limit_Value},
+ {0x0FBA,	   0x0FBA,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[6].Limit_Time},
+ {0x0FBB,	   0x0FBB,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[6].Trip_Value},
+ {0x0FBC,	   0x0FBC,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[6].Trip_Time},
+ {0x0FBD,	   0x0FBD,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[7].Limit_Value},
+ {0x0FBE,	   0x0FBE,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[7].Limit_Time},
+ {0x0FBF,	   0x0FBF,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[7].Trip_Value},
+ {0x0FC0,	   0x0FC0,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_SelfTest[7].Trip_Time},
+
+ {0x1004,	   0x1004,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_TEST_TIME[0]},
+ {0x1005,	   0x1005,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_TEST_TIME[1]},
+ {0x1006,	   0x1006,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_TEST_TIME[2]},
+ {0x1007,	   0x1007,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[0].Trip_Value},
+ {0x1008,	   0x1008,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[0].Trip_Time},
+ {0x1009,	   0x1009,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[0].Step_Result},
+ {0x100A,	   0x100A,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[1].Trip_Value},
+ {0x100B,	   0x100B,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[1].Trip_Time},
+ {0x100C,	   0x100C,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[1].Step_Result},
+ {0x100D,	   0x100D,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[2].Trip_Value},
+ {0x100E,	   0x100E,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[2].Trip_Time},
+ {0x100F,	   0x100F,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[2].Step_Result},
+ {0x1010,	   0x1010,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[3].Trip_Value},
+ {0x1011,	   0x1011,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[3].Trip_Time},
+ {0x1012,	   0x1012,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[3].Step_Result},
+ {0x1013,	   0x1013,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[4].Trip_Value},
+ {0x1014,	   0x1014,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[4].Trip_Time},
+ {0x1015,	   0x1015,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[4].Step_Result},
+ {0x1016,	   0x1016,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[5].Trip_Value},
+ {0x1017,	   0x1017,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[5].Trip_Time},
+ {0x1018,	   0x1018,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[5].Step_Result},
+ {0x1019,	   0x1019,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[6].Trip_Value},
+ {0x101A,	   0x101A,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[6].Trip_Time},
+ {0x101B,	   0x101B,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[6].Step_Result},
+ {0x101C,	   0x101C,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[7].Trip_Value},
+ {0x101D,	   0x101D,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[7].Trip_Time},
+ {0x101E,	   0x101E,	  0,	  65535,		  1,	  SEND_TYPE_16BIT,	  &HF_ItalyResult[7].Step_Result}
  
 };
 /*********************************************************************************************
@@ -783,6 +856,7 @@ const PARAM_CFG_TBL_STR HF_astrParamCfgTblAttr[PARAM_NUM]=
  {0x248D,    0x248D,    0,	  65535,	1,    CFG_TYPE_U16,       &HF_usArcDetectEn},
  {0x248E,    0x248E,    0,	  65535,	1,    CFG_TYPE_U16,       &HF_usArcResetEn},
  {0x248F,    0x248F,    0,	  65535,	1,    CFG_TYPE_U16,       &HF_usReconnectPwrRampUpEn},
- {0x2490,    0x2490,    0,	  65535,	1,    CFG_TYPE_U16,       &HF_usAntiRefluxPwrPercent}
+ {0x2490,    0x2490,    0,	  65535,	1,    CFG_TYPE_U16,       &HF_usAntiRefluxPwrPercent},
+ {0x7006,    0x7006,    0,	  65535,	1,    CFG_TYPE_U16,       &HF_IAPState}
 };
 

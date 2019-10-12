@@ -20,6 +20,8 @@ Param_Set_INFO Param_Set_Info;
 Protection_Func_Enable_INFO Protection_Func_Enable_Info;
 Key_Data_INFO Key_Data_Info;
 INV_Set_INFO INV_Set_Info;
+INT16U IAPState = 0;  		//IAP×´Ì¬
+INT16U InvOnOffCmd = 0;  		//¿ª¹Ø»ú×´Ì¬
 INT8U System_Time_Change_Flag = 0;
 INT8U Italy_SelfTest_Flag = 0;
 
@@ -117,10 +119,13 @@ void Variable_Transformation()
 			INV_Set_Info.WaitStandupTime = &MF_WaitStandupTime;
 			IicFlag.bit.mubTimeW = 1;
 			System_Time_Change_Flag = 0;
+			
+			
 		}
 		memcpy(AutoTestResult_Info.TEST_TIME,MF_TEST_TIME,6);
 		memcpy(AutoTestResult_Info.ItalyResult,MF_ItalyResult,48);
-		
+		IAPState = __REV16(MF_IAPState);
+		InvOnOffCmd = __REV16(MF_usInvOnOffCmd);
 
 	}
 	else if(PRJ_NUMBER == HORNET)
@@ -207,8 +212,12 @@ void Variable_Transformation()
 			INV_Set_Info.InvOnOffCmd = &HF_usInvOnOffCmd;
 			INV_Set_Info.WaitStandupTime = &HF_usPowerOnDelayTime;  	
 			IicFlag.bit.mubTimeW = 1;
-			System_Time_Change_Flag = 0;
+			System_Time_Change_Flag = 0;	
 		}	
+		memcpy(AutoTestResult_Info.TEST_TIME,HF_TEST_TIME,6);
+		memcpy(AutoTestResult_Info.ItalyResult,HF_ItalyResult,48);
+		IAPState = __REV16(HF_IAPState);
+		InvOnOffCmd = __REV16(HF_usInvOnOffCmd);
 	}	
 }
 

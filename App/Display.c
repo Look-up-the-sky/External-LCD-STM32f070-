@@ -6,7 +6,7 @@
  * 描述：显示控制
  *******************************************************/
 
-#define version "V1.0.5"
+#define version "V1.0.9"
 /********************************************************************
  * Include Files
  ********************************************************************/
@@ -363,37 +363,24 @@ void sInitDisplayTask(void)
 	}
 	lubInterface = cDefaultInterface;
 
-	if(Safty.data.Protection.bit.ub60Hz)
-	{
-		luwFreqSetMin[0] = 6010;
-		luwFreqSetMin[1] = 6010;
-		luwFreqSetMin[4] = 5500;
-		luwFreqSetMin[5] = 5500;
-		luwFreqSetMax[0] = 6500;
-		luwFreqSetMax[1] = 6500;
-		luwFreqSetMax[4] = 5990;
-		luwFreqSetMax[5] = 5990;
-	}
-	else
-	{
-		luwFreqSetMin[0] = 5010;
-		luwFreqSetMin[1] = 5010;
-		luwFreqSetMin[4] = 4500;
-		luwFreqSetMin[5] = 4500;
-		luwFreqSetMax[0] = 5500;
-		luwFreqSetMax[1] = 5500;
-		luwFreqSetMax[4] = 4990;
-		luwFreqSetMax[5] = 4990;
-	}
 	
-	luwFreqSetMin[2] = 100;
-	luwFreqSetMin[3] = 100;
-	luwFreqSetMin[6] = 100;
-	luwFreqSetMin[7] = 100;
-	luwFreqSetMax[2] = 65000;
-	luwFreqSetMax[3] = 60000;
-	luwFreqSetMax[6] = 65000;
-	luwFreqSetMax[7] = 60000;
+	luwFreqSetMin[0] = 5000;
+	luwFreqSetMin[1] = 5000;
+	luwFreqSetMin[4] = 4500;
+	luwFreqSetMin[5] = 4500;
+	luwFreqSetMax[0] = 6500;
+	luwFreqSetMax[1] = 6500;
+	luwFreqSetMax[4] = 6000;
+	luwFreqSetMax[5] = 6000;
+	
+	luwFreqSetMin[2] = 0;
+	luwFreqSetMin[3] = 0;
+	luwFreqSetMin[6] = 0;
+	luwFreqSetMin[7] = 0;
+	luwFreqSetMax[2] = 10000;
+	luwFreqSetMax[3] = 10000;
+	luwFreqSetMax[6] = 10000;
+	luwFreqSetMax[7] = 10000;
 	
 }
 
@@ -431,9 +418,20 @@ void sChooseInterface(void)
 	INT16U luwParamSetTemp;
 	INT16U luwAutoTestTemp1;
 	INT16U luwAutoTestTemp2;
+	static INT16U luwAutoTestTemp1_pre;
+	static INT16U luwAutoTestTemp2_pre;
 	INT32U lulError,Error_Temp;
-		
-	if((Button.all & 0x0FF0) == 0)						//10s无操作则返回默认界面
+	static INT8U First_Enter_Flag = 1;
+	
+	if((IAPState > 1)&&(IAPState < 6))                  //显示逆变器升级状态
+	{
+		sWriteScreenBuf(0,0,20,"                    ");
+		sWriteScreenBuf(1,0,20,"    INV UPDATING    ");
+		sWriteScreenBuf(2,0,20,"                    ");
+		sWriteScreenBuf(3,0,20,"                    ");
+		return;
+	}
+	if((Button.all & 0x0FF0) == 0)						//60s无操作则返回默认界面
 	{
 		if(++luwNoOprateCnt >= 600)
 		{
@@ -454,6 +452,10 @@ void sChooseInterface(void)
 		if(INV_StateFlag == 4)
 		{
 			strcpy(lubString,"Normal   ");
+		}
+		else if(INV_StateFlag == 9)
+		{
+			strcpy(lubString,"OFF      ");
 		}
 		else
 		{
@@ -1037,9 +1039,9 @@ void sChooseInterface(void)
 			lubString[17] = (ErrorRecord.data.ErrorMessage[lubInterface - cErrorPage1].data.Second % 10) + 0x30;
 			sWriteScreenBuf(1,0,20,lubString);
 			if(PRJ_NUMBER == HORNET)
-				sWriteScreenBuf(2,0,20,(INT8U *)MF_lubErrorInterpret[Error_Temp]);
-			else if(PRJ_NUMBER == SUNNYBEE)
 				sWriteScreenBuf(2,0,20,(INT8U *)HF_lubErrorInterpret[Error_Temp]);
+			else if(PRJ_NUMBER == SUNNYBEE)
+				sWriteScreenBuf(2,0,20,(INT8U *)MF_lubErrorInterpret[Error_Temp]);
 			sWriteScreenBuf(3,0,20,"                    ");
 			
 			if(Button.bit.ubEscPress)												//单击Esc键
@@ -1229,7 +1231,7 @@ void sChooseInterface(void)
 				luwProtectionSetMax[5] = 0xAA;
 				luwProtectionSetMax[6] = 0xAA;
 				luwProtectionSetMax[7] = 0xAA;
-				luwProtectionSetMax[8] = 0xAA;
+				luwProtectionSetMax[8] = 0x08;
 				luwProtectionSetMax[9] = 0xAA;
 				luwProtectionSetMax[10] = 0xAA;
 				luwProtectionSetMax[11] = 0xAA;
@@ -1243,7 +1245,7 @@ void sChooseInterface(void)
 				luwProtectionSetMin[5] = 0x55;
 				luwProtectionSetMin[6] = 0x55;
 				luwProtectionSetMin[7] = 0x55;
-				luwProtectionSetMin[8] = 0x55;
+				luwProtectionSetMin[8] = 0x00;
 				luwProtectionSetMin[9] = 0x55;
 				luwProtectionSetMin[10] = 0x55;
 				luwProtectionSetMin[11] = 0x55;
@@ -1260,7 +1262,7 @@ void sChooseInterface(void)
 				luwProtectionSetMax[5] = 1;
 				luwProtectionSetMax[6] = 1;
 				luwProtectionSetMax[7] = 1;
-				luwProtectionSetMax[8] = 1;
+				luwProtectionSetMax[8] = 0x08;
 				luwProtectionSetMax[9] = 1;
 				luwProtectionSetMax[10] = 1;
 				luwProtectionSetMax[11] = 1;
@@ -1275,7 +1277,7 @@ void sChooseInterface(void)
 				luwProtectionSetMin[5] = 0;
 				luwProtectionSetMin[6] = 0;
 				luwProtectionSetMin[7] = 0;
-				luwProtectionSetMin[8] = 0;
+				luwProtectionSetMin[8] = 0x00;
 				luwProtectionSetMin[9] = 0;
 				luwProtectionSetMin[10] = 0;
 				luwProtectionSetMin[11] = 0;
@@ -1562,10 +1564,10 @@ void sChooseInterface(void)
 	}
 	
 	
-	else if(lubInterface == cAutoTestSet)         //自检模式
+	else if(lubInterface == cAutoTestSet)         //自检设置
 	{
 		luwNoOprateCnt = 0;
-		if((Safty.data.uwCountry == cItaly )&&(PRJ_NUMBER == SUNNYBEE))
+		if(Safty.data.uwCountry == cItaly )
 		{
 			sAutoTestAsis(1);
 			lubInterfacePre = cAutoTestSet;
@@ -1578,7 +1580,7 @@ void sChooseInterface(void)
 	else if(lubInterface == cAutoTestResult)     //自检结果
 	{
 	
-		if((Safty.data.uwCountry == cItaly )&&(PRJ_NUMBER == SUNNYBEE))
+		if(Safty.data.uwCountry == cItaly )
 		{
 			strcpy(lubString,"Test Time 20  -  -  ");
 			lubString[12] = ((INT8U)AutoTestResult_Info.TEST_TIME[0] / 10) + 0x30;
@@ -1603,13 +1605,13 @@ void sChooseInterface(void)
 				{
 					strcpy(lubString,"27.S1       V     ms");
 					sTransferData(1,__REV16(AutoTestResult_Info.ItalyResult[0].Trip_Value),&lubString[7],4);
-					sDisplayAsist(7,10,lubString);	
+					sDisplayAsist(7,9,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[0].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(2,0,20,lubString);					
 					strcpy(lubString,"27.S2       V     ms");
 					sTransferData(1,__REV16(AutoTestResult_Info.ItalyResult[1].Trip_Value),&lubString[7],4);
-					sDisplayAsist(7,10,lubString);	
+					sDisplayAsist(7,9,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[1].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(3,0,20,lubString);	
@@ -1620,13 +1622,13 @@ void sChooseInterface(void)
 				{
 					strcpy(lubString,"59.S1       V     ms");
 					sTransferData(1,__REV16(AutoTestResult_Info.ItalyResult[2].Trip_Value),&lubString[7],4);
-					sDisplayAsist(7,10,lubString);	
+					sDisplayAsist(7,9,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[2].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(2,0,20,lubString);					
 					strcpy(lubString,"59.S2       V     ms");
 					sTransferData(1,__REV16(AutoTestResult_Info.ItalyResult[3].Trip_Value),&lubString[7],4);
-					sDisplayAsist(7,10,lubString);	
+					sDisplayAsist(7,9,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[3].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(3,0,20,lubString);	
@@ -1636,13 +1638,13 @@ void sChooseInterface(void)
 				{
 					strcpy(lubString,"81<S1      Hz     ms");
 					sTransferData(2,(__REV16(AutoTestResult_Info.ItalyResult[4].Trip_Value)/10),&lubString[6],4);
-					sDisplayAsist(6,9,lubString);	
+					sDisplayAsist(6,7,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[4].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(2,0,20,lubString);					
 					strcpy(lubString,"81<S2      Hz     ms");
 					sTransferData(2,(__REV16(AutoTestResult_Info.ItalyResult[5].Trip_Value)/10),&lubString[6],4);
-					sDisplayAsist(6,9,lubString);	
+					sDisplayAsist(6,7,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[5].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(3,0,20,lubString);	
@@ -1652,13 +1654,13 @@ void sChooseInterface(void)
 				{
 					strcpy(lubString,"81>S1      Hz     ms");
 					sTransferData(2,(__REV16(AutoTestResult_Info.ItalyResult[6].Trip_Value)/10),&lubString[6],4);
-					sDisplayAsist(6,9,lubString);	
+					sDisplayAsist(6,7,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[6].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(2,0,20,lubString);					
 					strcpy(lubString,"81>S2      Hz     ms");
 					sTransferData(2,(__REV16(AutoTestResult_Info.ItalyResult[7].Trip_Value)/10),&lubString[6],4);
-					sDisplayAsist(6,9,lubString);	
+					sDisplayAsist(6,7,lubString);	
 					sTransferData(0,__REV16(AutoTestResult_Info.ItalyResult[7].Trip_Time),&lubString[14],4);
 					sDisplayAsist(14,17,lubString);						
 					sWriteScreenBuf(3,0,20,lubString);	
@@ -2871,10 +2873,18 @@ void sChooseInterface(void)
 		}
 		if(PRJ_NUMBER == SUNNYBEE)
 		{
-			for(i = 0;i < 13;i++)
+			for(i = 0;i < 8;i++)
 			{
 				if((luwProtectionSet[i] == 0xA9)||(luwProtectionSet[i] == 0xAB))
-				luwProtectionSet[i] = luwProtectionSetMin[i];
+					luwProtectionSet[i] = luwProtectionSetMin[i];
+				if((luwProtectionSet[i] == 0x54)||(luwProtectionSet[i] == 0x56))
+					luwProtectionSet[i] = luwProtectionSetMax[i];
+			}
+			
+			for(i = 9;i < 13;i++)
+			{
+				if((luwProtectionSet[i] == 0xA9)||(luwProtectionSet[i] == 0xAB))
+					luwProtectionSet[i] = luwProtectionSetMin[i];
 				if((luwProtectionSet[i] == 0x54)||(luwProtectionSet[i] == 0x56))
 					luwProtectionSet[i] = luwProtectionSetMax[i];
 			}
@@ -4310,18 +4320,18 @@ void sChooseInterface(void)
 		}
 		sWriteScreenBuf(0,0,20,lubString);
 
-			strcpy(lubString,"T :     ms        ms");
+			strcpy(lubString,"T:      ms        ms");
 			if(lubIconSelected != 2 || lubBlinkCnt < 10)
 			{
-				sTransferData(0,luwFreqSet[2],&lubString[3],5);
+				sTransferData(2,luwFreqSet[2],&lubString[2],5);
 			}
 			if(lubIconSelected != 3 || lubBlinkCnt < 10)
 			{
-				sTransferData(0,luwFreqSet[3],&lubString[13],5);
+				sTransferData(2,luwFreqSet[3],&lubString[12],5);
 			}
 		
-		sDisplayAsist(3,7,lubString);
-		sDisplayAsist(13,17,lubString);
+		sDisplayAsist(2,4,lubString);
+		sDisplayAsist(12,14,lubString);
 		sWriteScreenBuf(1,0,20,lubString);
 		
 		strcpy(lubString,"FL:     Hz        Hz");
@@ -4335,19 +4345,19 @@ void sChooseInterface(void)
 		}
 		sWriteScreenBuf(2,0,20,lubString);
 		
-			strcpy(lubString,"T :     ms        ms");
+			strcpy(lubString,"T:      ms        ms");
 			if(lubIconSelected != 6 || lubBlinkCnt < 10)
 			{
-				sTransferData(0,luwFreqSet[6],&lubString[3],5);
+				sTransferData(2,luwFreqSet[6],&lubString[2],5);
 			}
 			if(lubIconSelected != 7 || lubBlinkCnt < 10)
 			{
-				sTransferData(0,luwFreqSet[7],&lubString[13],5);
+				sTransferData(2,luwFreqSet[7],&lubString[12],5);
 			}
 		
 
-		sDisplayAsist(3,7,lubString);
-		sDisplayAsist(13,17,lubString);
+		sDisplayAsist(2,4,lubString);
+		sDisplayAsist(12,14,lubString);
 		sWriteScreenBuf(3,0,20,lubString);
 		
 		if(Button.bit.ubEscPress)												//单击Esc键
@@ -4364,7 +4374,7 @@ void sChooseInterface(void)
 		}
 		else if(Button.bit.ubDownPress || Button.bit.ubDownLongPress)			//单击或长按Down键
 		{	        
-			if(--luwFreqSet[lubIconSelected] < luwFreqSetMin[lubIconSelected])
+			if(--luwFreqSet[lubIconSelected] > luwFreqSetMax[lubIconSelected])
 			{
 				luwFreqSet[lubIconSelected] = luwFreqSetMax[lubIconSelected];
 			}
@@ -4431,17 +4441,17 @@ void sChooseInterface(void)
 		}
 		sWriteScreenBuf(0,0,20,lubString);
 		
-		strcpy(lubString,"T :     ms        ms");
+		strcpy(lubString,"T:      ms        ms");
 		if(lubIconSelected != 2 || lubBlinkCnt < 10)
 		{
-			sTransferData(0,luwVoltSet[2],&lubString[3],5);
+			sTransferData(2,luwVoltSet[2],&lubString[2],5);
 		}
 		if(lubIconSelected != 3 || lubBlinkCnt < 10)
 		{
-			sTransferData(0,luwVoltSet[3],&lubString[13],5);
+			sTransferData(2,luwVoltSet[3],&lubString[12],5);
 		}
-		sDisplayAsist(3,7,lubString);
-		sDisplayAsist(13,17,lubString);
+		sDisplayAsist(2,4,lubString);
+		sDisplayAsist(12,14,lubString);
 		sWriteScreenBuf(1,0,20,lubString);
 		
 		strcpy(lubString,"VL:     V         V ");
@@ -4456,17 +4466,17 @@ void sChooseInterface(void)
 		sDisplayAsist(13,17,lubString);
 		sWriteScreenBuf(2,0,20,lubString);
 		
-		strcpy(lubString,"T :     ms        ms");
+		strcpy(lubString,"T:      ms        ms");
 		if(lubIconSelected != 6 || lubBlinkCnt < 10)
 		{
-			sTransferData(0,luwVoltSet[6],&lubString[3],5);
+			sTransferData(2,luwVoltSet[6],&lubString[2],5);
 		}
 		if(lubIconSelected != 7 || lubBlinkCnt < 10)
 		{
-			sTransferData(0,luwVoltSet[7],&lubString[13],5);
+			sTransferData(2,luwVoltSet[7],&lubString[12],5);
 		}
-		sDisplayAsist(3,7,lubString);
-		sDisplayAsist(13,17,lubString);
+		sDisplayAsist(2,4,lubString);
+		sDisplayAsist(12,14,lubString);
 		sWriteScreenBuf(3,0,20,lubString);
 		
 		if(Button.bit.ubEscPress)												//单击Esc键
@@ -4483,7 +4493,7 @@ void sChooseInterface(void)
 		}
 		else if(Button.bit.ubDownPress || Button.bit.ubDownLongPress)			//单击或长按Down键
 		{        
-			if(--luwVoltSet[lubIconSelected] < luwVoltSetMin[lubIconSelected])
+			if(--luwVoltSet[lubIconSelected] > luwVoltSetMax[lubIconSelected])
 			{
 				luwVoltSet[lubIconSelected] = luwVoltSetMax[lubIconSelected];
 			}
@@ -4639,34 +4649,44 @@ void sChooseInterface(void)
 		}
 		
 	}
-	else if(lubInterface == cAutoTestPage)
+	else if(lubInterface == cAutoTestPage)                //意大利自检
 	{
 		if((Italy_SelfTest_Flag >= 1)&&(Italy_SelfTest_Flag <= 8))
 		{
-			AutoTest_Info.Trip_Value = __REV16(MF_SelfTest[Italy_SelfTest_Flag-1].Trip_Value);    //意大利自检
-			AutoTest_Info.Trip_Time = __REV16(MF_SelfTest[Italy_SelfTest_Flag-1].Trip_Time);    //意大利自检
-			AutoTest_Info.State = __REV16(MF_SelfTestState);    //意大利自检
+			if(PRJ_NUMBER == SUNNYBEE)
+			{
+				AutoTest_Info.Trip_Value = __REV16(MF_SelfTest[Italy_SelfTest_Flag-1].Trip_Value);    //意大利自检
+				AutoTest_Info.Trip_Time = __REV16(MF_SelfTest[Italy_SelfTest_Flag-1].Trip_Time);    //意大利自检
+				AutoTest_Info.State = __REV16(MF_SelfTestState);    //意大利自检
+			}
+			if(PRJ_NUMBER == HORNET)
+			{
+				AutoTest_Info.Trip_Value = __REV16(HF_SelfTest[Italy_SelfTest_Flag-1].Trip_Value);    //意大利自检
+				AutoTest_Info.Trip_Time = __REV16(HF_SelfTest[Italy_SelfTest_Flag-1].Trip_Time);    //意大利自检
+				AutoTest_Info.State = __REV16(HF_SelfTestState);    //意大利自检
+			}
 		}
 
 		luwNoOprateCnt = 0;
 		sWriteScreenBuf(0,0,20,"Auto Test:          ");
 		sWriteScreenBuf(1,0,20,lubStringTemp);	
 		
-		luwAutoTestTemp1 = sAutoTestAsis1(1,lubIconSelected,AutoTest_Info.Trip_Value);
-		luwAutoTestTemp2 = sAutoTestAsis1(2,lubIconSelected,AutoTest_Info.Trip_Time);
+		luwAutoTestTemp1 = AutoTest_Info.Trip_Value;
+		luwAutoTestTemp2 = AutoTest_Info.Trip_Time;
+		
 		if((lubIconSelected <= 4) && (lubIconSelected > 0))
 		{
 			strcpy(lubString,"        V       ms  ");	
 			if(luwAutoTestCnt < 400)
 			{
 				sTransferData(1,luwAutoTestTemp1,&lubString[3],4);
-				sDisplayAsist(3,6,lubString);			
+				sDisplayAsist(3,5,lubString);			
 			}
 			else
 			{
 				luwAutoTestTemp1 = 0;
 				luwAutoTestTemp2 = 0;
-				sTransferData(1,luwAutoTestTemp1,&lubString[5],2);		
+				sTransferData(1,luwAutoTestTemp1,&lubString[5],2);					
 			}
 		}	
 		else if((lubIconSelected >= 5) && (lubIconSelected <= 8))
@@ -4675,7 +4695,7 @@ void sChooseInterface(void)
 			if(luwAutoTestCnt < 400)
 			{
 				sTransferData(2,(luwAutoTestTemp1/10),&lubString[3],4);
-				sDisplayAsist(3,6,lubString);
+				sDisplayAsist(3,4,lubString);
 			}
 			else
 			{
@@ -4689,6 +4709,24 @@ void sChooseInterface(void)
 		sDisplayAsist(12,15,lubString);
 		sWriteScreenBuf(2,0,20,lubString);	
 		sWriteScreenBuf(3,0,20,"Status:             ");
+		if(First_Enter_Flag == 1)
+		{
+			luwAutoTestTemp1_pre = luwAutoTestTemp1;
+			luwAutoTestTemp2_pre = luwAutoTestTemp2;
+			First_Enter_Flag = 0;
+		}
+		if((luwAutoTestTemp1 == luwAutoTestTemp1_pre)&&(luwAutoTestTemp2 == luwAutoTestTemp2_pre))  //若跳脱值无变化，则不更新state状态，维持testing显示
+		{
+			AutoTest_Info.State = 0xA2;
+			if((lubIconSelected <= 4) && (lubIconSelected > 0))
+			{
+				sWriteScreenBuf(2,0,20,"      --V     --ms  ");
+			}
+			else if((lubIconSelected >= 5) && (lubIconSelected <= 8))
+			{
+				sWriteScreenBuf(2,0,20,"      --Hz    --ms  ");
+			}
+		}	
 		if(AutoTest_Info.State == 0xAA)	
 		{
 			luwAutoTestCnt = 0;
@@ -4706,7 +4744,7 @@ void sChooseInterface(void)
 				if(AutoTest_Info.State == 0xA2)	
 				{
 					luwAutoTestCnt = 0;
-					sWriteScreenBuf(3,0,20,"Status:   waiting   ");
+					sWriteScreenBuf(3,0,20,"Status:   Testing   ");
 				}
 			}
 		
@@ -4718,12 +4756,16 @@ void sChooseInterface(void)
 		}
 		if(Button.bit.ubEscPress)	
 		{
+			First_Enter_Flag = 1;
 			SlaveData.data.SlaveFlag.bit.ubSelfTestStep = 1;
 			luwAutoTestCnt = 0;
 			lubInterface = lubInterfacePre;
 			lubIconSelected = 0;
-			MF_usItalySelfTestEn = 0x00;
-			write_10_date.usStartAddr = 0x214D;
+			*Protection_Func_Enable_Info.ItalySelfTestEN = 0x00;
+			if(PRJ_NUMBER == SUNNYBEE)
+				write_10_date.usStartAddr = 0x214D;
+			else if(PRJ_NUMBER == HORNET)
+				write_10_date.usStartAddr = 0x248A;
 			write_10_date.usLen = 1;
 			FLAG_10_UPDATE = 1;
 		}
@@ -4954,7 +4996,7 @@ void sAutoTestAsis(INT8U lubModel)
 	}
 	else
 	{
-		strcpy(lubString,"   81<.S1   81<.S2  ");
+		strcpy(lubString,"  81<.S1    81<.S2  ");
 		if(lubIconSelected == 5 && lubBlinkCnt > 10)
 		{
 			strcpy(lubString,"        ");
@@ -4965,7 +5007,7 @@ void sAutoTestAsis(INT8U lubModel)
 		}
 		sWriteScreenBuf(2,0,20,lubString);
 		
-		strcpy(lubString,"   81>.S1   81>.S2  ");
+		strcpy(lubString,"  81>.S1    81>.S2  ");
 		if(lubIconSelected == 7 && lubBlinkCnt > 10)
 		{
 			strcpy(lubString,"        ");
@@ -5018,8 +5060,11 @@ void sAutoTestAsis(INT8U lubModel)
 			lubInterface = lubInterfacePre;
 		}
 		Italy_SelfTest_Flag = lubIconSelected;
-		MF_usItalySelfTestEn = __REV16(lubIconSelected);
-		write_10_date.usStartAddr = 0x214D;
+		*Protection_Func_Enable_Info.ItalySelfTestEN = __REV16(lubIconSelected);
+		if(PRJ_NUMBER == SUNNYBEE)
+				write_10_date.usStartAddr = 0x214D;
+		else if(PRJ_NUMBER == HORNET)
+				write_10_date.usStartAddr = 0x248A;
 		write_10_date.usLen = 1;
 		FLAG_10_UPDATE = 1;
 		

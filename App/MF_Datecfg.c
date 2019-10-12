@@ -142,6 +142,8 @@ INT16U MF_ausProtEnResv[3];				//Reserved
 INT16U MF_ausCommSetEndIDTAG;  //设备结束标识TAG  	
 INT16U MF_ausCommSetEndIDLength;  		//标识长度	
 
+INT16U MF_IAPState = 0;  		//IAP状态
+
 const PARAM_CFG_TBL_STR g_astrParamSendTblAttr[PARAM_NUM] =
 {
  //device info
@@ -601,7 +603,7 @@ const PARAM_CFG_TBL_STR g_astrParamCfgTblAttr[PARAM_NUM]=
  {0x2159,    0x2159,    0,	  65535,	1,    CFG_TYPE_U16,       &MF_ausProtEnResv[1]},
  {0x215A,    0x215A,    0,	  65535,	1,    CFG_TYPE_U16,       &MF_ausProtEnResv[2]},
  {0x215B,    0x215B,    0,	  65535,	1,    CFG_TYPE_U16,       &MF_ausCommSetEndIDTAG},
- {0x215C,    0x215C,    0,	  65535,	1,    CFG_TYPE_U16,       &MF_ausCommSetEndIDLength}
-
+ {0x215C,    0x215C,    0,	  65535,	1,    CFG_TYPE_U16,       &MF_ausCommSetEndIDLength},
+ {0x7006,    0x7006,    0,	  65535,	1,    CFG_TYPE_U16,       &MF_IAPState}
 };
 

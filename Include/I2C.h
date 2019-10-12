@@ -64,6 +64,5 @@ extern IICFLAG IicFlag;
 
 void sI2CTask(void);
 void sReadAllEepromData(void);
-void sResetProtect(INT16U luwCountry);
 
 #endif
